@@ -1,9 +1,11 @@
 package sg.edu.nus.iss.day37pmpractice.controller;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import sg.edu.nus.iss.day37pmpractice.model.Article;
 import sg.edu.nus.iss.day37pmpractice.repository.ArticleRepository;
@@ -42,6 +45,29 @@ public class ArticleController {
         return ResponseEntity.status(200)
             .header("Content-Type", a.getMediaType())
             .body(a.getContent());
+    }
+
+    @GetMapping(path="/post/{post_id}")
+    @ResponseBody
+    public ModelAndView getPost(@PathVariable String post_id) {
+        Optional<Article> opt = articleRepo.findImageById(post_id);
+        StringBuilder strBdr = new StringBuilder();
+        strBdr.append("data:").append(opt.get().getMediaType()).append(";base64,");
+
+        byte[] image = opt.get().getContent();
+        String b64 = Base64.getEncoder().encodeToString(image);
+        strBdr.append(b64);
+
+        String imageData = strBdr.toString();
+        System.out.println("imageData: " + imageData);
+
+        ModelAndView mav = new ModelAndView();
+        mav.setStatus(HttpStatus.valueOf(200));
+        mav.setViewName("photo");
+        mav.addObject("imageData", imageData);
+        mav.addObject("post_id", post_id);
+        
+        return mav;
     }
 
     @PostMapping(path="/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
